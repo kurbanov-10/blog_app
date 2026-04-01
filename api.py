@@ -1,28 +1,41 @@
 from typing import List
 from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
 from sqlalchemy import select
-from schemas import BlogCreate,BlogOut,BlogUpdate, BlogComment
+from schemas import BlogCreate,BlogOut,BlogUpdate, UserCreate, UserOut
 from database import Base, get_db, engine
-from models import Blog
+from models import Blog,User
 
 
 
 Base.metadata.create_all(bind=engine)
 api_router = APIRouter(prefix='/api/posts')
 
+@api_router.post('/users', response_model=UserOut)
+def create_user(user_in: UserCreate, db: Session = Depends(get_db)):
+    user = User(**user_in.model_dump())
+
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    return user
 
 @api_router.post('/', response_model=BlogOut)
-def create_post(post_in: BlogCreate, db = Depends(get_db)):
-    post = Blog(
-            author = post_in.author,
-            title = post_in.title,
-            content = post_in.content )
-    
-    db.add(post)
-    db.commit()
-    db.refresh(post)
+def create_post(blog_in: BlogCreate, db: Session = Depends(get_db)):
+    stmt = select(User).where(User.id == blog_in.user_id)
+    user = db.scalar(stmt)
 
-    return  post
+    if not user:
+        raise HTTPException(status_code=404, detail=f"{blog_in.user_id}-raqamli user mavjud emas")
+
+    blog = Blog(**blog_in.model_dump())
+
+    db.add(blog)
+    db.commit()
+    db.refresh(blog)
+
+    return blog
 
 
 @api_router.get('/', response_model=List[BlogOut])
@@ -79,20 +92,19 @@ def delete_post(post_id: int, db = Depends(get_db)):
 
     return {"status": 204}
 
-@api_router.put('/{post_id/comment}')
-def comment_post(post_id:int,post_in: BlogComment, db=Depends(get_db)):
+# @api_router.put('/{post_id/comment}')
+# def comment_post(post_id:int,post_in: BlogComment, db=Depends(get_db)):
 
-    stmt = select(Blog).where(Blog.id == post_id)
-    post = db.scalar(stmt)
+#     stmt = select(Blog).where(Blog.id == post_id)
+#     post = db.scalar(stmt)
 
-    post.comment = post_in.comment
+#     post.comment = post_in.comment
 
-    db.add(post)
-    db.commit()
-    db.refresh(post)
+#     db.add(post)
+#     db.commit()
+#     db.refresh(post)
     
-    if not post:
-        raise HTTPException(status_code=404, detail=f"{post_id}-raqamli post mavjud emas")
+#     if not post:
+#         raise HTTPException(status_code=404, detail=f"{post_id}-raqamli post mavjud emas")
 
-
-    return post
+#     return post

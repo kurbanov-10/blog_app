@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Todo App</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f5f5f5;
+      color: #222;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      color: #111;
+    }
+
+    /* Create form */
+    .create-form {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .create-form h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.2rem;
+      color: #444;
+    }
+
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input[type="text"]:focus, textarea:focus {
+      border-color: #4f6ef7;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    button {
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.9rem;
+      border: none;
+      border-radius: 6px;
+      padding: 0.45rem 0.9rem;
+      transition: background 0.15s, opacity 0.15s;
+    }
+
+    button:disabled { opacity: 0.5; cursor: default; }
+
+    .btn-primary {
+      background: #4f6ef7;
+      color: #fff;
+      font-weight: 600;
+      align-self: flex-start;
+    }
+    .btn-primary:hover:not(:disabled) { background: #3a58e0; }
+
+    .btn-sm {
+      padding: 0.3rem 0.65rem;
+      font-size: 0.82rem;
+    }
+
+    .btn-edit {
+      background: #f0f0f0;
+      color: #333;
+    }
+    .btn-edit:hover:not(:disabled) { background: #e0e0e0; }
+
+    .btn-delete {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+    .btn-delete:hover:not(:disabled) { background: #fecaca; }
+
+    .btn-save {
+      background: #d1fae5;
+      color: #065f46;
+      font-weight: 600;
+    }
+    .btn-save:hover:not(:disabled) { background: #a7f3d0; }
+
+    .btn-cancel {
+      background: #f3f4f6;
+      color: #555;
+    }
+    .btn-cancel:hover:not(:disabled) { background: #e5e7eb; }
+
+    /* Status messages */
+    .message {
+      padding: 0.65rem 1rem;
+      border-radius: 7px;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
+    .message.error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+      display: block;
+    }
+    .message.success {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #6ee7b7;
+      display: block;
+    }
+
+    /* Loading */
+    .loading {
+      text-align: center;
+      color: #888;
+      padding: 2rem 0;
+      font-size: 0.95rem;
+    }
+
+    /* Todo list */
+    .todo-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .empty {
+      text-align: center;
+      color: #999;
+      padding: 2.5rem 0;
+      font-size: 0.95rem;
+    }
+
+    /* Todo card */
+    .todo-card {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 1rem 1.1rem;
+      transition: box-shadow 0.15s;
+    }
+    .todo-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+
+    .todo-card.completed .todo-name {
+      text-decoration: line-through;
+      color: #999;
+    }
+
+    .todo-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    .todo-checkbox {
+      margin-top: 3px;
+      width: 17px;
+      height: 17px;
+      flex-shrink: 0;
+      cursor: pointer;
+      accent-color: #4f6ef7;
+    }
+
+    .todo-body { flex: 1; min-width: 0; }
+
+    .todo-name {
+      font-weight: 600;
+      font-size: 1rem;
+      word-break: break-word;
+    }
+
+    .todo-desc {
+      color: #666;
+      font-size: 0.88rem;
+      margin-top: 0.2rem;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    .todo-actions {
+      display: flex;
+      gap: 0.4rem;
+      margin-top: 0.75rem;
+      justify-content: flex-end;
+    }
+
+    /* Inline edit form */
+    .edit-form {
+      margin-top: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      border-top: 1px solid #eee;
+      padding-top: 0.85rem;
+    }
+
+    .edit-actions {
+      display: flex;
+      gap: 0.4rem;
+      justify-content: flex-end;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Blog Posts</h1>
+
+    <div class="create-form">
+      <h2>New Post</h2>
+      <input type="text" id="create-author" placeholder="Author" />
+      <input type="text" id="create-title" placeholder="Title" />
+      <textarea id="create-content" placeholder="Content (markdown/plain text)"></textarea>
+      <button class="btn-primary" id="create-btn" onclick="createPost()">Add Post</button>
+    </div>
+
+    <div class="message" id="global-message"></div>
+
+    <div id="posts-container">
+      <div class="loading">Loading...</div>
+    </div>
+  </div>
+
+  <script>
+  const API = 'http://localhost:8000/api/posts';
+
+    // ── helpers ──────────────────────────────────────────────────────────────
+
+    function showMessage(text, type = 'error', duration = 4000) {
+      const el = document.getElementById('global-message');
+      el.textContent = text;
+      el.className = `message ${type}`;
+      clearTimeout(el._timer);
+      el._timer = setTimeout(() => { el.className = 'message'; }, duration);
+    }
+
+    async function apiFetch(url, options = {}) {
+      const res = await fetch(url, {
+        headers: { 'Content-Type': 'application/json' },
+        ...options,
+      });
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(`${res.status} ${res.statusText}${text ? ': ' + text : ''}`);
+      }
+      const ct = res.headers.get('content-type') || '';
+      return ct.includes('application/json') ? res.json() : null;
+    }
+
+    // ── render ────────────────────────────────────────────────────────────────
+
+    function renderPosts(posts) {
+      const container = document.getElementById('posts-container');
+      if (!posts || !posts.length) {
+        container.innerHTML = '<div class="empty">No posts yet. Add one above!</div>';
+        return;
+      }
+
+      container.innerHTML = '';
+      const list = document.createElement('div');
+      list.className = 'todo-list';
+
+      posts.forEach(post => {
+        list.appendChild(buildCard(post));
+      });
+
+      container.appendChild(list);
+    }
+
+    function buildCard(post) {
+      const card = document.createElement('div');
+      card.className = 'todo-card';
+      card.dataset.id = post.id;
+
+      card.innerHTML = `
+        <div class="todo-header">
+          <div class="todo-body">
+            <div class="todo-name">${escHtml(post.title)}</div>
+            <div class="todo-desc"><strong>By:</strong> ${escHtml(post.author)}</div>
+            <div class="todo-desc">${escHtml(post.content || '')}</div>
+            ${post.comments && post.comments.length ?
+              `<div class="comments" id="comments-${post.id}">
+                ${post.comments.map(c => `<div class="todo-desc"><strong>${escHtml(c.author)}:</strong> ${escHtml(c.comment)}</div>`).join('')}
+               </div>` : ''}
+          </div>
+        </div>
+        <div class="todo-actions">
+          <button class="btn-sm btn-edit" onclick="openEdit(${post.id})">Edit</button>
+          <button class="btn-sm btn-delete" onclick="deletePost(${post.id})">Delete</button>
+          <button class="btn-sm btn-save" onclick="toggleCommentForm(${post.id})">Comment</button>
+        </div>
+        <div class="edit-form" id="edit-form-${post.id}" style="display:none">
+          <input type="text" id="edit-author-${post.id}" value="${escAttr(post.author)}" placeholder="Author" />
+          <input type="text" id="edit-title-${post.id}" value="${escAttr(post.title)}" placeholder="Title" />
+          <textarea id="edit-content-${post.id}" placeholder="Content">${escHtml(post.content || '')}</textarea>
+          <div class="edit-actions">
+            <button class="btn-sm btn-cancel" onclick="closeEdit(${post.id})">Cancel</button>
+            <button class="btn-sm btn-save" onclick="saveEdit(${post.id})">Save</button>
+          </div>
+        </div>
+        <div class="edit-form" id="comment-form-${post.id}" style="display:none">
+          <input type="text" id="comment-author-${post.id}" placeholder="Your name" />
+          <textarea id="comment-text-${post.id}" placeholder="Add a comment"></textarea>
+          <div class="edit-actions">
+            <button class="btn-sm btn-cancel" onclick="toggleCommentForm(${post.id})">Cancel</button>
+            <button class="btn-sm btn-save" onclick="addComment(${post.id})">Add Comment</button>
+          </div>
+        </div>
+      `;
+
+      return card;
+    }
+
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function escAttr(str) {
+      return String(str).replace(/"/g, '&quot;');
+    }
+
+    // ── CRUD ─────────────────────────────────────────────────────────────────
+
+    async function loadPosts() {
+      document.getElementById('posts-container').innerHTML = '<div class="loading">Loading...</div>';
+      try {
+        const posts = await apiFetch(`${API}/`);
+        renderPosts(posts);
+      } catch (err) {
+        document.getElementById('posts-container').innerHTML = '';
+        showMessage(`Failed to load posts: ${err.message}`);
+      }
+    }
+
+    async function createPost() {
+      const authorEl = document.getElementById('create-author');
+      const titleEl = document.getElementById('create-title');
+      const contentEl = document.getElementById('create-content');
+      const btn = document.getElementById('create-btn');
+
+      const author = authorEl.value.trim();
+      const title = titleEl.value.trim();
+      const content = contentEl.value.trim();
+
+      if (!author) { authorEl.focus(); return; }
+      if (!title) { titleEl.focus(); return; }
+
+      btn.disabled = true;
+      try {
+        await apiFetch(`${API}/`, {
+          method: 'POST',
+          body: JSON.stringify({ author, title, content }),
+        });
+        authorEl.value = '';
+        titleEl.value = '';
+        contentEl.value = '';
+        await loadPosts();
+      } catch (err) {
+        showMessage(`Failed to create post: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function deletePost(id) {
+      if (!confirm('Delete this post?')) return;
+      const card = document.querySelector(`.todo-card[data-id="${id}"]`);
+      const btn = card.querySelector('.btn-delete');
+      btn.disabled = true;
+      try {
+        await apiFetch(`${API}/${id}`, { method: 'DELETE' });
+        card.remove();
+        if (!document.querySelector('.todo-card')) {
+          document.getElementById('posts-container').innerHTML =
+            '<div class="empty">No posts yet. Add one above!</div>';
+        }
+      } catch (err) {
+        btn.disabled = false;
+        showMessage(`Failed to delete post: ${err.message}`);
+      }
+    }
+
+    function openEdit(id) {
+      document.querySelectorAll('.edit-form').forEach(f => f.style.display = 'none');
+      document.getElementById(`edit-form-${id}`).style.display = 'flex';
+      document.getElementById(`edit-author-${id}`).focus();
+    }
+
+    function closeEdit(id) {
+      document.getElementById(`edit-form-${id}`).style.display = 'none';
+    }
+
+    async function saveEdit(id) {
+      const authorEl = document.getElementById(`edit-author-${id}`);
+      const titleEl = document.getElementById(`edit-title-${id}`);
+      const contentEl = document.getElementById(`edit-content-${id}`);
+      const card = document.querySelector(`.todo-card[data-id="${id}"]`);
+
+      const author = authorEl.value.trim();
+      const title = titleEl.value.trim();
+      const content = contentEl.value.trim();
+
+      if (!author) { authorEl.focus(); return; }
+      if (!title) { titleEl.focus(); return; }
+
+      const saveBtn = card.querySelector('.btn-save');
+      saveBtn.disabled = true;
+
+      try {
+        const updated = await apiFetch(`${API}/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify({ author, title, content }),
+        });
+
+  // reload posts to reflect changes (simpler and keeps DOM consistent)
+  await loadPosts();
+      } catch (err) {
+        showMessage(`Failed to update post: ${err.message}`);
+      } finally {
+        saveBtn.disabled = false;
+      }
+    }
+
+    function toggleCommentForm(id) {
+      const el = document.getElementById(`comment-form-${id}`);
+      if (!el) return;
+      el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    async function addComment(id) {
+      const authorEl = document.getElementById(`comment-author-${id}`);
+      const textEl = document.getElementById(`comment-text-${id}`);
+      if (!authorEl || !textEl) return;
+
+      const author = authorEl.value.trim();
+      const comment = textEl.value.trim();
+      if (!author) { authorEl.focus(); return; }
+      if (!comment) { textEl.focus(); return; }
+
+      try {
+        await apiFetch(`${API}/${id}/comment`, {
+          method: 'POST',
+          body: JSON.stringify({ author, comment }),
+        });
+        await loadPosts();
+      } catch (err) {
+        showMessage(`Failed to add comment: ${err.message}`);
+      }
+    }
+
+    // Allow Enter to submit the create form (Shift+Enter for newline in textarea)
+    document.getElementById('create-title').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) createPost();
+    });
+
+    // ── init ─────────────────────────────────────────────────────────────────
+    loadPosts();
+  </script>
+</body>
+</html>

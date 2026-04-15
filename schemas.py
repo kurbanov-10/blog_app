@@ -33,3 +33,16 @@ class BlogUpdate(BlogBase):
 class Token(BaseModel):
     access_token: str
     token_type: str
+    
+class CommentBase(BaseModel):
+    commentary: str = Field(max_length=200)
+    user_id: int
+    blog_id: int
+class CommentCreate(CommentBase):
+    pass
+class CommentOut(CommentBase):
+    id: int = Field(ge=1)
+class CommentUpdate(CommentBase):
+    commentary: str = Field(max_length=200)
+    user_id: int
+    blog_id: int

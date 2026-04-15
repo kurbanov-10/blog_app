@@ -7,9 +7,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select  
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
-from schemas import BlogCreate,BlogOut,BlogUpdate, UserCreate, UserOut, Token
+from schemas import BlogCreate,BlogOut,BlogUpdate, UserCreate, UserOut, Token, CommentCreate, CommentOut, CommentUpdate
 from database import Base, get_db, engine
-from models import Blog,User
+from models import Blog,User, Comment
 
 
 
@@ -136,19 +136,65 @@ def delete_post(post_id: int, db = Depends(get_db)):
 
     return {"status": 204}
 
-# @api_router.put('/{post_id/comment}')
-# def comment_post(post_id:int,post_in: BlogComment, db=Depends(get_db)):
+@api_router.post('/comments', response_model=CommentOut)
+def create_comment(comment_in: CommentCreate, db: Session = Depends(get_db)):
+    stmt = select(User).where(User.id == comment_in.user_id)
+    user = db.scalar(stmt)
 
-#     stmt = select(Blog).where(Blog.id == post_id)
-#     post = db.scalar(stmt)
+    if not user:
+        raise HTTPException(status_code=404, detail=f"{comment_in.user_id}-raqamli user mavjud emas")
 
-#     post.comment = post_in.comment
+    stmt = select(Blog).where(Blog.id == comment_in.blog_id)
+    blog = db.scalar(stmt)
 
-#     db.add(post)
-#     db.commit()
-#     db.refresh(post)
+    if not blog:
+        raise HTTPException(status_code=404, detail=f"{comment_in.blog_id}-raqamli post mavjud emas")
+
+    comment = Comment(**comment_in.model_dump())
+
+    db.add(comment)
+    db.commit()
+    db.refresh(comment)
+
+    return comment
+
+@api_router.get('/comments', response_model=List[CommentOut])
+def get_comments(db = Depends(get_db)):
+    stmt = select(Comment)
+    comments = db.scalars(stmt).all()
     
-#     if not post:
-#         raise HTTPException(status_code=404, detail=f"{post_id}-raqamli post mavjud emas")
+    if not comments:
+        raise HTTPException(status_code=404, detail="commentlar mavjud emas")
+    
+    return comments
 
-#     return post
+@api_router.post('/comments/{comment_id}', response_model=CommentOut)
+def update_comment(comment_id: int, comment_in: CommentUpdate, db = Depends(get_db)):
+    stmt = select(Comment).where(Comment.id == comment_id)
+    comment: CommentOut = db.scalar(stmt)
+
+    if not comment:
+        raise HTTPException(status_code=404, detail=f"{comment_id}-raqamli comment mavjud emas")
+
+    comment.commentary = comment_in.commentary
+    comment.user_id = comment_in.user_id
+    comment.blog_id = comment_in.blog_id
+
+    db.add(comment)
+    db.commit()
+    db.refresh(comment)
+
+    return comment
+
+@api_router.delete('/{comment_id}')
+def delete_post(comment_id: int, db = Depends(get_db)):
+    stmt = select(Comment).where(Comment.id == comment_id)
+    comment = db.scalar(stmt)
+
+    if not comment:
+        raise HTTPException(status_code=404, detail=f"{comment_id}-raqamli comment mavjud emas")
+
+    db.delete(comment)
+    db.commit()
+
+    return

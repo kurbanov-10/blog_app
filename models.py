@@ -6,9 +6,10 @@ class User(Base):
     __tablename__ = 'users'
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    username: Mapped[str] = mapped_column(String(length=50), unique=True)
     first_name: Mapped[str] = mapped_column(String(length=100))
     last_name: Mapped[str] = mapped_column(String(length=100))
-    
+    hashed_password: Mapped[str] = mapped_column(String(length=200))
     blogs: Mapped['Blog'] = relationship(back_populates='user',
                                          cascade='all, delete-orphan')
 

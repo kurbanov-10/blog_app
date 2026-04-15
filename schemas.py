@@ -6,8 +6,8 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    pass
-
+    username: str = Field(min_length=3, max_length=50)
+    password: str = Field(min_length=6, max_length=100)
 
 class UserOut(UserBase):
     id: int
@@ -30,5 +30,6 @@ class BlogUpdate(BlogBase):
     content: str = Field(max_length=200)
     title: str = Field(max_length=200)
     
-# class BlogComment(BlogBase):
-#     comment: str = Field(max_length=200)
+class Token(BaseModel):
+    access_token: str
+    token_type: str

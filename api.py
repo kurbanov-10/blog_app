@@ -187,7 +187,7 @@ def update_comment(comment_id: int, comment_in: CommentUpdate, db = Depends(get_
     return comment
 
 @api_router.delete('/{comment_id}')
-def delete_post(comment_id: int, db = Depends(get_db)):
+def delete_coment(comment_id: int, db = Depends(get_db)):
     stmt = select(Comment).where(Comment.id == comment_id)
     comment = db.scalar(stmt)
 

@@ -1,10 +1,11 @@
 import security
 import jwt
+import time
 
 from typing import List
 from fastapi import APIRouter, HTTPException, Depends, status
 from sqlalchemy.orm import Session
-from sqlalchemy import select  
+from sqlalchemy import select, func
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from schemas import BlogCreate,BlogOut,BlogUpdate, UserCreate, UserOut, Token, CommentCreate, CommentOut, CommentUpdate
@@ -39,6 +40,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 
 @api_router.post('/users', response_model=UserOut)
 def create_user(user_in: UserCreate, db: Session = Depends(get_db)):
+    time.sleep(2)
     user = db.scalar(select(User).where(User.username == user_in.username))
     if user:
         raise HTTPException(status_code=400, detail=f"{user_in.username} bunday foydalanuvchi mavjud")
@@ -92,6 +94,21 @@ def get_posts(db = Depends(get_db)):
         raise HTTPException(status_code=404, detail="postlar mavjud emas")
     
     return posts
+
+@api_router.get('/post/')
+def get_posts_pagination(limit: int = 5, offset: int=0, db: Session = Depends(get_db)):
+    stmt = select(Blog).limit(limit).offset(offset)
+    posts = db.scalars(stmt).all()
+    post_count=db.scalar(select(func.count()).select_from(Blog))
+    
+    data={
+        "title": post_count,
+        "content": posts,
+        "limit": limit,
+        "offset": offset
+    }
+
+    return data
 
 
 @api_router.get('/{post_id}', response_model=BlogOut)

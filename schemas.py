@@ -11,11 +11,11 @@ class UserCreate(UserBase):
 
 class UserOut(UserBase):
     id: int
+    username: str
 
 
 
 class BlogBase(BaseModel):
-    # author: str = Field(max_length=100)
     title: str = Field(max_length=100)
     content: str = Field(max_length=200)
     user_id: int

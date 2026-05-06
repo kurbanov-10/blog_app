@@ -1,6 +1,7 @@
 from sqlalchemy import String, Integer, ForeignKey
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from database import Base
+from enums import Roles
 
 
 class User(Base):
@@ -16,7 +17,8 @@ class User(Base):
                                          cascade='all, delete-orphan')
     comments: Mapped['Comment'] = relationship(back_populates='user',
                                                cascade='all, delete-orphan')
-
+    role: Mapped[Roles] = mapped_column(String(length=50), default=Roles.USER, nullable=True)
+    
 
 class Blog(Base):
     __tablename__ = 'Blogs'

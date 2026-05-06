@@ -7,13 +7,15 @@ from schemas.post import BlogCreate, BlogOut, BlogUpdate
 from schemas.users import UserOut
 from database import get_db
 from models import Blog
-from dependencies import get_current_user
+from dependencies import get_current_user, role_checker
 
 post_router = APIRouter(tags=["Post"], prefix='/api/post')
 
 
 @post_router.post('/', response_model=BlogOut)
-async def create_post(blog_in: BlogCreate, db: Session = Depends(get_db), user: UserOut = Depends(get_current_user)):
+async def create_post(blog_in: BlogCreate, db: Session = Depends(get_db), 
+                      user: UserOut = Depends(get_current_user),
+                      _: UserOut = Depends(role_checker('admin')) ):
     if not user:
         raise HTTPException(status_code=404, detail=f"{blog_in.user_id}-raqamli user mavjud emas")
 

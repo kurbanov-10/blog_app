@@ -13,6 +13,7 @@ from database import get_db
 from models import User
 from email_service import send_welcome_email
 
+
 users_router = APIRouter(tags=["User"], prefix='/api/users')
 
 

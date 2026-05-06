@@ -9,6 +9,7 @@ from fastapi.security import OAuth2PasswordBearer
 
 from database import get_db
 from models import User
+from enums import Roles
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/posts/users/login")
 
@@ -31,3 +32,12 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         raise credentials_exception
 
     return user
+
+
+def role_checker(*allowed_roles: Roles):
+    def checker(user: User = Depends(get_current_user)):
+        if user.role not in allowed_roles:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Ruxsat etilmagan")
+        return user
+
+    return checker

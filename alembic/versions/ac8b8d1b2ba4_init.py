@@ -1,8 +1,8 @@
-"""model comment create
+"""init
 
-Revision ID: 4aaa8d650afe
+Revision ID: ac8b8d1b2ba4
 Revises: 
-Create Date: 2026-04-15 20:10:48.666270
+Create Date: 2026-05-05 09:01:36.173133
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '4aaa8d650afe'
+revision: str = 'ac8b8d1b2ba4'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -42,9 +42,9 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('commentary', sa.String(length=200), nullable=True),
     sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.Column('blog_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['blog_id'], ['Blogs.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     # ### end Alembic commands ###

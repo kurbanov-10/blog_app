@@ -1,10 +1,13 @@
 import time
 
 from fastapi import FastAPI, Request
-from api import api_router
+from routes.post import post_router
+from routes.users import users_router
+from routes.comment import comment_router
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
@@ -22,4 +25,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.include_router(api_router)
+app.include_router(users_router)
+app.include_router(post_router)
+app.include_router(comment_router)

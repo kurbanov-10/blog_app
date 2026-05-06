@@ -1,4 +1,3 @@
-import aiohttp
 import os
 from dotenv import load_dotenv
 import smtplib
@@ -10,7 +9,6 @@ FROM_EMAIL = os.getenv('EMAIL_FROM')
 EMAIL_PASSWORD = os.getenv('EMAIL_PASSWORD')
 EMAIL_HOST = os.getenv('EMAIL_HOST')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', 465))
-
 
 
 async def send_welcome_email(email: str):
